@@ -1,0 +1,48 @@
+apiVersion: apps/v1      # Version de l'API Kubernetes utilisée pour les Deployments.
+kind: Deployment  # Deployment permet de gérer les Pods et de maintenir le nombre de réplicas souhaité.
+metadata: 
+  name: mysql   # Nom du Deployment demandé dans l'énoncé.
+  namespace: bijouterie   # Namespace dans lequel sera déployé MySQL.
+  labels:     # Labels permettant d'identifier la ressource.
+    app: bijouterie
+    tier: database
+spec:
+  replicas: 1   # Nombre de Pods MySQL souhaités.
+  selector:   # Sélecteur permettant au Deployment d'identifier ses Pods.
+    matchLabels:
+      app: bijouterie
+      tier: database
+  template:   # Modèle utilisé pour créer les Pods.
+    metadata:
+      labels:
+        app: bijouterie
+        tier: database
+    spec:
+      containers:
+        - name: mysql
+          image: ahmed372/bijouterie-mysql:1    # Image MySQL personnalisée hébergée sur Docker Hub.
+          ports:    # Port interne utilisé par le serveur MySQL.
+            - containerPort: 3306
+              name: mysql
+              protocol: TCP
+          envFrom:    # Injection des quatre variables depuis mysql-secret.
+            - secretRef:
+                name: mysql-secret
+          resources:    # Ressources CPU et mémoire réservées et maximales.
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          readinessProbe:   # Vérifie que MySQL accepte les connexions.
+            exec:
+              command:
+                - sh
+                - -c
+                - 'mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent'
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          imagePullPolicy: IfNotPresent   # Politique de téléchargement de l'image.
