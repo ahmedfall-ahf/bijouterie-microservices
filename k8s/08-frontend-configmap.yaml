@@ -1,0 +1,11 @@
+apiVersion: v1    # Version de l'API Kubernetes utilisée pour les ConfigMaps.
+kind: ConfigMap   # ConfigMap centralise les paramètres non sensibles du Frontend.
+metadata:
+  name: frontend-config
+  namespace: bijouterie
+  labels:
+    app: bijouterie       # Identifie l'application Bijouterie.
+    tier: frontend        # Identifie la couche Frontend.
+data:
+  BACKEND_URL: "http://backend:3000"  # Adresse du Backend via le DNS interne Kubernetes.
+  MAX_UPLOAD_SIZE: "6m"               # Taille maximale acceptée par Nginx pour les fichiers envoyés.
