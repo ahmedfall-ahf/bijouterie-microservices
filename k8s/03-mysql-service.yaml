@@ -1,0 +1,18 @@
+apiVersion: v1    # Version de l'API Kubernetes utilisée pour les Services.
+kind: Service     # Service permet d'exposer un ensemble de Pods sur le réseau Kubernetes.
+metadata:
+  name: mysql     # Nom du Service utilisé par les autres composants pour accéder à MySQL.
+  namespace: bijouterie    # Namespace dans lequel sera créé le Service.
+  labels:         # Labels permettant d'identifier la ressource.
+    app: bijouterie
+    tier: database
+spec:
+  type: ClusterIP    # Expose MySQL uniquement à l'intérieur du cluster ; la base ne doit pas être joignable directement depuis l'extérieur.
+  selector:          # Sélectionne les Pods auxquels le Service doit transmettre le trafic.
+    app: bijouterie
+    tier: database
+  ports:
+    - name: mysql       # Nom du port pouvant être référencé par d'autres ressources.
+      port: 3306        # Port sur lequel le Service reçoit les connexions.
+      targetPort: mysql # Transmet les connexions vers le port nommé mysql du conteneur.
+      protocol: TCP     # Protocole de communication utilisé.
