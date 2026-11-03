@@ -1,0 +1,16 @@
+apiVersion: v1    # Version de l'API Kubernetes utilisée pour les ConfigMaps.
+kind: ConfigMap   # ConfigMap permet de stocker des paramètres non sensibles.
+metadata:
+  name: backend-config    # Nom de la ConfigMap utilisée par le Backend.
+  namespace: bijouterie   # Namespace dans lequel sera créée la ConfigMap.
+  labels:                 # Labels permettant d'identifier la ressource.
+    app: bijouterie
+    tier: backend
+data:
+  PORT: "3000"                 # Port d'écoute du Backend.
+  DB_HOST: "mysql"                      # Nom DNS du Service MySQL.
+  DB_PORT: "3306"                       # Port du Service MySQL.
+  DB_NAME: "bijouterie"                 # Nom de la base de données.
+  SHOP_NAME: "Maison Aurore"            # Nom de la boutique.
+  CURRENCY: "EUR"             # Devise utilisée par l'application.
+  MAX_FILE_SIZE_MB: "5"     # Taille maximale des fichiers en Mo.
