@@ -1,0 +1,69 @@
+apiVersion: apps/v1    # Version de l'API Kubernetes utilisée pour les Deployments.
+kind: Deployment       # Deployment permet de gérer les Pods et de maintenir le nombre de réplicas.
+metadata:
+  name: frontend       # Nom du Deployment Frontend.
+  namespace: bijouterie
+  labels:
+    app: bijouterie    # Identifie l'application Bijouterie.
+    tier: frontend     # Identifie la couche Frontend.
+spec:
+  replicas: 2          # Maintient deux instances du Frontend pour améliorer la disponibilité.
+  selector:
+    matchLabels:
+      app: bijouterie
+      tier: frontend   # Sélectionne uniquement les Pods portant ces labels.
+  template:
+    metadata:
+      labels:
+        app: bijouterie
+        tier: frontend # Attribue les mêmes labels aux Pods créés.
+    spec:
+      containers:
+        - name: frontend
+          image: ahmed372/bijouterie-frontend:1  # Image Docker du Frontend.
+          imagePullPolicy: IfNotPresent           # Réutilise l'image locale si elle est déjà disponible.
+          ports:
+            - name: http
+              containerPort: 80                   # Port HTTP utilisé par Nginx.
+              protocol: TCP
+
+          # envFrom récupère les paramètres non sensibles depuis frontend-config.
+          # Cela permet de centraliser la configuration du Frontend sans modifier l'image Docker.
+          envFrom:
+            - configMapRef:
+                name: frontend-config             # ConfigMap contenant BACKEND_URL et MAX_UPLOAD_SIZE.
+
+          # resources définit les ressources CPU et mémoire du conteneur Nginx.
+          # requests indique les ressources minimales réservées.
+          # limits fixe la consommation maximale autorisée.
+          resources:
+            requests:
+              cpu: "50m"                          # Réserve 0,05 cœur CPU pour Nginx.
+              memory: "64Mi"                      # Réserve 64 Mio de mémoire.
+            limits:
+              cpu: "200m"                         # Limite la consommation à 0,2 cœur CPU.
+              memory: "128Mi"                     # Limite la mémoire à 128 Mio.
+
+          # livenessProbe vérifie que Nginx fonctionne toujours.
+          # Après plusieurs échecs consécutifs, Kubernetes redémarre le conteneur.
+          livenessProbe:
+            httpGet:
+              path: /healthz                      # Endpoint HTTP de contrôle de santé.
+              port: http                          # Utilise le port nommé http (80).
+              scheme: HTTP
+            initialDelaySeconds: 10               # Attend 10 secondes avant le premier contrôle.
+            periodSeconds: 15                     # Répète le contrôle toutes les 15 secondes.
+            timeoutSeconds: 5                     # Attend au maximum 5 secondes pour une réponse.
+            failureThreshold: 3                   # Déclenche un redémarrage après 3 échecs consécutifs.
+
+          # readinessProbe vérifie si Nginx est prêt à recevoir du trafic.
+          # Si le contrôle échoue, le Pod est temporairement retiré des endpoints du Service.
+          readinessProbe:
+            httpGet:
+              path: /healthz                      # Vérifie la disponibilité du Frontend.
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 5                # Attend 5 secondes avant le premier contrôle.
+            periodSeconds: 10                     # Répète le contrôle toutes les 10 secondes.
+            timeoutSeconds: 5                     # Attend au maximum 5 secondes pour une réponse.
+            failureThreshold: 3                   # Déclare le Pod non prêt après 3 échecs consécutifs.
