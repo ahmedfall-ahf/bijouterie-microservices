@@ -1,0 +1,18 @@
+apiVersion: v1    # Version de l'API Kubernetes utilisée pour les Services.
+kind: Service     # Service permet d'exposer un ensemble de Pods sur le réseau Kubernetes.
+metadata:
+  name: backend     # Nom du Service utilisé par BACKEND_URL.
+  namespace: bijouterie    # Namespace dans lequel sera créé le Service.
+  labels:         # Labels permettant d'identifier la ressource.
+    app: bijouterie
+    tier: backend
+spec:
+  type: ClusterIP    # Expose le backend uniquement à l'intérieur du cluster ; il ne doit pas être joignable directement depuis l'extérieur.
+  selector:          # Sélectionne les Pods auxquels le Service doit transmettre le trafic.
+    app: bijouterie
+    tier: backend
+  ports:
+    - name: http       # Nom du port pouvant être référencé par d'autres ressources.
+      port: 3000        # Port sur lequel le Service reçoit les connexions.
+      targetPort: http # Transmet les connexions vers le port nommé "http" du Deployment backend
+      protocol: TCP     # Protocole de communication utilisé.

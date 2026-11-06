@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: frontend
+  namespace: bijouterie
+  labels:
+    app: bijouterie
+    tier: frontend
+
+spec:
+  type: NodePort
+
+  selector:
+    app: bijouterie
+    tier: frontend
+
+  ports:
+    - name: http
+      protocol: TCP     # Protocole réseau utilisé pour communiquer avec le Service.
+      port: 80          # Port d'entrée du Service dans le cluster.
+      targetPort: http  # Port du conteneur Frontend (80).
+      nodePort: 30080   # Port ouvert sur le nœud docker-desktop.
+
+      # Trajet : localhost:30080 -> Service:80 -> Pod:80.
