@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+
+metadata:
+  name: mysql-pvc
+  namespace: bijouterie
+  labels:
+    app: bijouterie
+    tier: database
+
+spec:
+  accessModes:
+    - ReadWriteOnce  # Autorise un montage en lecture/écriture par un seul nœud à la fois.
+
+  resources:
+    requests:
+      storage: 1Gi  # Demande un espace de stockage persistant de 1 Gio.
