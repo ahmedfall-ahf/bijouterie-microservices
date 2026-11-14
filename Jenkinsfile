@@ -1,6 +1,6 @@
 pipeline {
     // Definition du label de l'agent Jenkins (agent Windows lance sur le PC)
-    agent { label 'bijouterie' }
+    agent { label 'tools' }
 
     // Definition des options du pipeline
     options {
