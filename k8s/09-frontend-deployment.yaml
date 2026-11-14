@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ahmed372/bijouterie-frontend:1  # Image Docker du Frontend.
+          image: ahmed372/bijouterie-frontend:13
           imagePullPolicy: IfNotPresent           # Réutilise l'image locale si elle est déjà disponible.
           ports:
             - name: http

@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ahmed372/bijouterie-backend:1  # Image Docker du Backend.
+          image: ahmed372/bijouterie-backend:13
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
