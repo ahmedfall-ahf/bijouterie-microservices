@@ -61,7 +61,7 @@ pipeline {
         stage('Push') {
             steps {
                 echo 'Publication des images sur Docker Hub'
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials',
+                withCredentials([usernamePassword(credentialsId: 'fall-bijouterie',
                                                   usernameVariable: 'DH_USER',
                                                   passwordVariable: 'DH_PASS')]) {
                     // Guillemets simples : PowerShell lit le secret, Groovy ne l'interpole pas.
