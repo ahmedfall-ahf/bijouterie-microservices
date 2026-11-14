@@ -92,7 +92,7 @@ pipeline {
                         // Creation du commit
                         bat 'git commit -m "ci: mise a jour des images - build %BUILD_NUMBER% [skip ci]"'
                         // Publication sur GitHub
-                        withCredentials([gitUsernamePassword(credentialsId: 'github-credentials', gitToolName: 'Default')]) {
+                        withCredentials([gitUsernamePassword(credentialsId: 'git', gitToolName: 'Default')]) {
                             bat 'git push origin HEAD:main'
                         }
                     }
