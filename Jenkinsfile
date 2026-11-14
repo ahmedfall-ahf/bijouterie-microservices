@@ -1,22 +1,17 @@
 pipeline {
-    // Definition du label de l'agent Jenkins (agent Windows lance sur le PC)
-    agent { label 'tools' }
-
+    // Definition du label de l'agent Jenkins
+    agent { label 'bijouterie' }
     // Definition des options du pipeline
     options {
-        // Le checkout est fait explicitement dans le stage Checkout
         skipDefaultCheckout()
     }
-
-    // Definition des variables d'environnement (noms des images sur Docker Hub)
+    // Definition des variables d'environnement
     environment {
         FRONTEND_IMAGE = 'ahmed372/bijouterie-frontend'
         BACKEND_IMAGE  = 'ahmed372/bijouterie-backend'
         MYSQL_IMAGE    = 'ahmed372/bijouterie-mysql'
     }
-
     stages {
-
         // Recuperation du code source depuis GitHub
         stage('Checkout') {
             steps {
@@ -24,16 +19,14 @@ pipeline {
                 checkout scm
             }
         }
-
-        // Verification de Docker et Git sur l'agent
+        // Verification de Docker et Git
         stage('Verification') {
             steps {
                 bat 'docker version'
                 bat 'git --version'
             }
         }
-
-        // Construction des trois images Docker (le contexte est le dossier du service)
+        // Construction des trois images Docker
         stage('Build') {
             steps {
                 echo 'Construction des trois images Docker'
@@ -42,58 +35,42 @@ pipeline {
                 bat 'docker build -t bijouterie-mysql:build .\\database'
             }
         }
-
-        // Double tag : le numero de build (utilise dans les manifests) et latest
-        // latest sert seulement sur Docker Hub, il est interdit dans k8s/
+        // Attribution du numero de build aux images
         stage('Tag') {
             steps {
-                echo "Attribution des tags ${BUILD_NUMBER} et latest"
+                echo "Attribution du tag ${BUILD_NUMBER}"
                 bat 'docker tag bijouterie-frontend:build %FRONTEND_IMAGE%:%BUILD_NUMBER%'
-                bat 'docker tag bijouterie-frontend:build %FRONTEND_IMAGE%:latest'
                 bat 'docker tag bijouterie-backend:build %BACKEND_IMAGE%:%BUILD_NUMBER%'
-                bat 'docker tag bijouterie-backend:build %BACKEND_IMAGE%:latest'
                 bat 'docker tag bijouterie-mysql:build %MYSQL_IMAGE%:%BUILD_NUMBER%'
-                bat 'docker tag bijouterie-mysql:build %MYSQL_IMAGE%:latest'
             }
         }
-
-        // Connexion a Docker Hub avec le credential Jenkins, puis publication des images
+        // Publication des images sur Docker Hub
         stage('Push') {
             steps {
                 echo 'Publication des images sur Docker Hub'
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials',
-                                                  usernameVariable: 'DH_USER',
-                                                  passwordVariable: 'DH_PASS')]) {
-                    // Guillemets simples : PowerShell lit le secret, Groovy ne l'interpole pas.
-                    // --password-stdin evite d'afficher le mot de passe dans la commande.
-                    powershell '$env:DH_PASS | docker login -u $env:DH_USER --password-stdin'
-                }
                 bat 'docker push %FRONTEND_IMAGE%:%BUILD_NUMBER%'
-                bat 'docker push %FRONTEND_IMAGE%:latest'
                 bat 'docker push %BACKEND_IMAGE%:%BUILD_NUMBER%'
-                bat 'docker push %BACKEND_IMAGE%:latest'
                 bat 'docker push %MYSQL_IMAGE%:%BUILD_NUMBER%'
-                bat 'docker push %MYSQL_IMAGE%:latest'
             }
         }
-
-        // Mise a jour automatique des manifests Kubernetes (GitOps : Argo CD deploie ensuite)
+        // Mise a jour automatique des manifests Kubernetes
         stage('Update manifests') {
             steps {
                 script {
                     echo "Mise a jour des manifests avec le tag ${BUILD_NUMBER}"
-                    // Le Deployment MySQL utilise l'image officielle mysql:8.4 (bonus init.sql),
-                    // il n'est donc pas dans cette liste.
                     def cibles = [
-                        'k8s/06-backend-deployment.yaml'  : env.BACKEND_IMAGE,
-                        'k8s/09-frontend-deployment.yaml' : env.FRONTEND_IMAGE
+                        'k8s/06-backend-deployment.yaml'   : env.BACKEND_IMAGE,
+                        'k8s/09-frontend-deployment.yaml'  : env.FRONTEND_IMAGE,
+                        'k8s/02-mysql-deployment.yaml'     : env.MYSQL_IMAGE
                     ]
                     cibles.each { fichier, image ->
                         def contenu = readFile(file: fichier, encoding: 'UTF-8')
-                        // [^\\s#]+ remplace seulement le tag et conserve le commentaire de fin de ligne
-                        def motif = "(?m)(image:\\s*${java.util.regex.Pattern.quote(image)}:)[^\\s#]+"
+                        def motif = "(?m)(image:\\s*${java.util.regex.Pattern.quote(image)}:)[^\\r\\n]+"
                         def remplacement = '$1' + env.BUILD_NUMBER
                         def nouveauContenu = contenu.replaceAll(motif, remplacement)
+                        if (nouveauContenu == contenu) {
+                            error("Aucune image correspondante trouvee dans ${fichier}")
+                        }
                         if (!nouveauContenu.contains("image: ${image}:${env.BUILD_NUMBER}")) {
                             error("Le remplacement de l'image a echoue dans ${fichier}")
                         }
@@ -104,28 +81,23 @@ pipeline {
                 // Configuration de l'auteur du commit
                 bat 'git config user.name "Jenkins"'
                 bat 'git config user.email "jenkins@users.noreply.github.com"'
-                // Ajout des fichiers modifies
-                bat 'git add k8s/06-backend-deployment.yaml k8s/09-frontend-deployment.yaml'
-                // Verification des modifications, commit puis push
+                // Ajout des trois fichiers modifies
+                bat 'git add k8s/06-backend-deployment.yaml k8s/09-frontend-deployment.yaml k8s/02-mysql-deployment.yaml'
+                // Verification des modifications
                 script {
-                    def changements = bat(script: '@git diff --cached --quiet', returnStatus: true)
+                    def changements = bat(script: 'git diff --cached --quiet', returnStatus: true)
                     if (changements == 0) {
                         echo 'Aucune modification a committer.'
                     } else {
+                        // Creation du commit
                         bat 'git commit -m "ci: mise a jour des images - build %BUILD_NUMBER% [skip ci]"'
+                        // Publication sur GitHub
                         withCredentials([gitUsernamePassword(credentialsId: 'github-credentials', gitToolName: 'Default')]) {
                             bat 'git push origin HEAD:main'
                         }
                     }
                 }
             }
-        }
-    }
-
-    // Deconnexion de Docker Hub, meme si un stage a echoue
-    post {
-        always {
-            bat(script: 'docker logout', returnStatus: true)
         }
     }
 }
