@@ -65,7 +65,7 @@ pipeline {
                     ]
                     cibles.each { fichier, image ->
                         def contenu = readFile(file: fichier, encoding: 'UTF-8')
-                        def motif = "(?m)(image:\\s*${java.util.regex.Pattern.quote(image)}:)[^\\r\\n]+"
+                        def motif = "(?m)(image:\\s*${java.util.regex.Pattern.quote(image)}:)[^\\s#]+"
                         def remplacement = '$1' + env.BUILD_NUMBER
                         def nouveauContenu = contenu.replaceAll(motif, remplacement)
                         if (nouveauContenu == contenu) {
