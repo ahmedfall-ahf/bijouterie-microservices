@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: ahmed372/bijouterie-mysql:13
+          image: ahmed372/bijouterie-mysql:14
           ports:    # Port interne utilisé par le serveur MySQL.
             - containerPort: 3306
               name: mysql

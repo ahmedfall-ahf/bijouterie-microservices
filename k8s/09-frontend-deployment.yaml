@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ahmed372/bijouterie-frontend:13
+          image: ahmed372/bijouterie-frontend:14
           imagePullPolicy: IfNotPresent           # Réutilise l'image locale si elle est déjà disponible.
           ports:
             - name: http

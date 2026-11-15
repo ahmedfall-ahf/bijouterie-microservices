@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ahmed372/bijouterie-backend:13
+          image: ahmed372/bijouterie-backend:14
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
