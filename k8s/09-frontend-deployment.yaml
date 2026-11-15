@@ -7,7 +7,7 @@ metadata:
     app: bijouterie    # Identifie l'application Bijouterie.
     tier: frontend     # Identifie la couche Frontend.
 spec:
-  replicas: 2          # Maintient deux instances du Frontend pour améliorer la disponibilité.
+  replicas: 3          # Maintient deux instances du Frontend pour améliorer la disponibilité.
   selector:
     matchLabels:
       app: bijouterie
