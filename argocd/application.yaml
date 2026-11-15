@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bijouterie
+  namespace: argocd            # namespace où tourne Argo CD
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ahmedfall-ahf/bijouterie-microservices.git  # URL de votre dépôt GitHub
+    targetRevision: main       # branche principale
+    path: k8s                  # dossier surveillé
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: bijouterie      # namespace de l'application
+  syncPolicy:
+    automated:
+      prune: true              # supprime les ressources retirées de Git
+      selfHeal: true           # corrige les modifications manuelles
+    syncOptions:
+      - CreateNamespace=true   # création automatique du namespace
